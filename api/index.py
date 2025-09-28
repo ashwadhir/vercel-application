@@ -69,4 +69,4 @@ def process_telemetry(request: TelemetryRequest):
             "breaches": breaches,
         }
         
-    return results
+    return {"regions": results}
