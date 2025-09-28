@@ -37,36 +37,33 @@ except FileNotFoundError:
 # --- Define API Endpoint ---
 @app.post("/process-telemetry")
 def process_telemetry(request: TelemetryRequest):
-    """
-    Accepts a list of regions and a latency threshold, then returns
-    per-region metrics.
-    """
     if df.empty:
         return {"error": "Telemetry data not found on server."}
 
-    results = {}
+    # FIX: Initialize a list instead of a dictionary
+    results_list = []
+    
     for region in request.regions:
-        # Filter data for the current region
         region_df = df[df['region'] == region]
 
         if region_df.empty:
-            results[region] = {"error": "No data for this region"}
             continue
 
-        # Calculate metrics
         avg_latency = region_df['latency_ms'].mean()
         p95_latency = region_df['latency_ms'].quantile(0.95)
-        avg_uptime = region_df['uptime_percent'].mean()
-        
-        # Count records where latency is above the given threshold
+        avg_uptime = region_df['uptime_pct'].mean()
         breaches = int((region_df['latency_ms'] > request.threshold_ms).sum())
 
-        # Store results for the region
-        results[region] = {
+        # Create a dictionary for the current region's metrics
+        region_metrics = {
+            "region": region, # Include the region name inside the object
             "avg_latency": round(avg_latency, 2),
             "p95_latency": round(p95_latency, 2),
             "avg_uptime": round(avg_uptime, 4),
             "breaches": breaches,
         }
-        
-    return {"regions": results}
+        # Append this dictionary to our list
+        results_list.append(region_metrics)
+    
+    # Return the final wrapped list
+    return {"regions": results_list}
