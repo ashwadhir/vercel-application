@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "data/telemetry.json"
+    }
+  },
   "builds": [
     {
       "src": "api/index.py",
