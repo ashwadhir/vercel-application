@@ -27,8 +27,8 @@ class TelemetryRequest(BaseModel):
 # Load the telemetry data at startup using a robust relative path.
 try:
     # The path is relative to this file's location (api/index.py)
-    DATA_PATH = Path(__file__).parent.parent / "data" / "telemetry.csv"
-    df = pd.read_csv(DATA_PATH)
+    DATA_PATH = Path(__file__).parent.parent / "data" / "telemetry.json"
+    df = pd.read_json(DATA_PATH)
 except FileNotFoundError:
     # Handle case where file might not be found
     df = pd.DataFrame()
