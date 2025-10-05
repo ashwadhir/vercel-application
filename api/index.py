@@ -40,9 +40,8 @@ def process_telemetry(request: TelemetryRequest):
     if df.empty:
         return {"error": "Telemetry data not found on server."}
 
-    # FIX: Initialize a list instead of a dictionary
     results_list = []
-    
+
     for region in request.regions:
         region_df = df[df['region'] == region]
 
@@ -54,16 +53,19 @@ def process_telemetry(request: TelemetryRequest):
         avg_uptime = region_df['uptime_pct'].mean()
         breaches = int((region_df['latency_ms'] > request.threshold_ms).sum())
 
-        # Create a dictionary for the current region's metrics
         region_metrics = {
-            "region": region, # Include the region name inside the object
+            "region": region,
             "avg_latency": round(avg_latency, 2),
             "p95_latency": round(p95_latency, 2),
             "avg_uptime": round(avg_uptime, 4),
             "breaches": breaches,
         }
-        # Append this dictionary to our list
         results_list.append(region_metrics)
-    
-    # Return the final wrapped list
-    return {"regions": results_list}
+
+    # Add a version key for our diagnostic test
+    final_response = {
+        "version": "v4-array-final",
+        "regions": results_list
+    }
+
+    return final_response
