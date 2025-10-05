@@ -3,45 +3,42 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pathlib import Path
+from typing import List
 
 # Initialize the FastAPI app
 app = FastAPI()
 
-# --- Enable CORS ---
-# This allows POST requests from any origin, as required.
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    # allow_credentials=True,
-    allow_methods=["*"], # Allows only POST requests
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
+    expose_headers=["*"]
 )
 
-# --- Define Request Body Model ---
-# This ensures the incoming JSON has the correct structure.
+# Define Request Body Model
 class TelemetryRequest(BaseModel):
-    regions: list[str]
+    regions: List[str]
     threshold_ms: int
 
-# --- Load Data ---
-# Load the telemetry data at startup using a robust relative path.
+# Load Data
 try:
-    # The path is relative to this file's location (api/index.py)
-    DATA_PATH = Path(__file__).parent.parent / "data" / "telemetry.csv"
-    df = pd.read_csv(DATA_PATH)
+    # Path relative to this file (api/index.py)
+    DATA_PATH = Path(__file__).parent.parent / "data" / "telemetry.json"
+    df = pd.read_json(DATA_PATH)
 except FileNotFoundError:
-    # Handle case where file might not be found
     df = pd.DataFrame()
 
-# --- Define API Endpoint ---
+# Define API Endpoint
 @app.post("/process-telemetry")
 def process_telemetry(request: TelemetryRequest):
     if df.empty:
         return {"error": "Telemetry data not found on server."}
 
     results_list = []
-
+    
     for region in request.regions:
         region_df = df[df['region'] == region]
 
@@ -61,11 +58,5 @@ def process_telemetry(request: TelemetryRequest):
             "breaches": breaches,
         }
         results_list.append(region_metrics)
-
-    # Add a version key for our diagnostic test
-    final_response = {
-        "version": "v4-array-final",
-        "regions": results_list
-    }
-
-    return final_response
+    
+    return {"regions": results_list}
